@@ -8,14 +8,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write     # assegura permissão para push
+  contents: write     # permite push de volta ao repositório
   actions: read
 
 jobs:
   extract-zip:
     runs-on: ubuntu-latest
-    outputs:
-      artifact-name: arquivos-extraidos
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
@@ -36,7 +34,7 @@ jobs:
       - name: Upload dos arquivos extraídos como artefato
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.extract-files.outputs.artifact-name }}
+          name: arquivos-extraidos
           path: extracted-files/
           retention-days: 7
 
@@ -53,12 +51,12 @@ jobs:
       - name: Baixar artefato de extração
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.extract-zip.outputs.artifact-name }}
+          name: arquivos-extraidos
           path: extracted-files
 
       - name: Copiar arquivos para o repositório
         run: |
-          cp -R extracted-files/* .    # ajusta o destino conforme sua estrutura
+          cp -R extracted-files/* .
 
       - name: Configurar Git
         run: |
