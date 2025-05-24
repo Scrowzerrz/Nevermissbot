@@ -1,0 +1,31 @@
+# .github/workflows/extract-zip.yml
+name: Extrair ZIP
+
+on:
+  push:
+    paths:
+      - 'nevermiss-2-em-1.zip'
+  workflow_dispatch:
+
+jobs:
+  extract_zip:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Faz checkout do seu repositório
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      # 2. Instala o unzip caso não esteja presente
+      - name: Instalar unzip
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      # 3. Descompacta o arquivo ZIP na pasta `extracted`
+      - name: Descompactar nevermiss-2-em-1.zip
+        run: |
+          mkdir -p extracted
+          unzip nevermiss-2-em-1.zip -d extracted
+
+      # 4. Lista os arquivos extraídos para conferência
+      - name: Listar conteúdo extraído
+        run: ls -R extracted/
