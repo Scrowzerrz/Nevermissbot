@@ -1,5 +1,5 @@
 # .github/workflows/extract-zip.yml
-name: Extrair ZIP
+name: Extrair e inspecionar ZIP
 
 on:
   push:
@@ -12,20 +12,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Faz checkout do seu repositório
-      - name: Checkout do código
+      - name: Checkout do repositório
         uses: actions/checkout@v4
 
-      # 2. Instala o unzip caso não esteja presente
       - name: Instalar unzip
         run: sudo apt-get update && sudo apt-get install -y unzip
 
-      # 3. Descompacta o arquivo ZIP na pasta `extracted`
-      - name: Descompactar nevermiss-2-em-1.zip
+      - name: Mostrar arquivos do repositório
+        run: |
+          echo "Diretório de trabalho: $(pwd)"
+          ls -la .
+
+      - name: Verificar existência do ZIP
+        run: |
+          if [[ -f "nevermiss-2-em-1.zip" ]]; then
+            echo "ZIP encontrado!"
+          else
+            echo "❌ nevermiss-2-em-1.zip NÃO encontrado!"
+            exit 1
+          fi
+
+      - name: Descompactar ZIP
         run: |
           mkdir -p extracted
-          unzip nevermiss-2-em-1.zip -d extracted
+          unzip -o nevermiss-2-em-1.zip -d extracted
 
-      # 4. Lista os arquivos extraídos para conferência
       - name: Listar conteúdo extraído
         run: ls -R extracted/
+
+      - name: Fazer upload do conteúdo extraído
+        uses: actions/upload-artifact@v3
+        with:
+          name: arquivos-extraidos
+          path: extracted/
