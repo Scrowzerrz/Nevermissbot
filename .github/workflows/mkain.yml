@@ -1,0 +1,36 @@
+name: Extrair arquivo ZIP
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Permite executar manualmente
+
+jobs:
+  extract-zip:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout do repositório
+      uses: actions/checkout@v3
+    
+    - name: Criar diretório para extração
+      run: mkdir -p extracted-files
+    
+    - name: Extrair arquivo ZIP
+      run: |
+        unzip nevermiss-2-em-1.zip -d extracted-files/
+        echo "Arquivo extraído com sucesso!"
+    
+    - name: Listar arquivos extraídos
+      run: |
+        echo "Conteúdo extraído:"
+        ls -la extracted-files/
+    
+    - name: Upload dos arquivos extraídos como artefato
+      uses: actions/upload-artifact@v3
+      with:
+        name: arquivos-extraidos
+        path: extracted-files/
+        retention-days: 7
