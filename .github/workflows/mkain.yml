@@ -1,36 +1,72 @@
-name: Extrair arquivo ZIP
+name: Extrair e Commitar ZIP
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:  # Permite executar manualmente
+  workflow_dispatch:
+
+permissions:
+  contents: write     # assegura permissão para push
+  actions: read
 
 jobs:
   extract-zip:
     runs-on: ubuntu-latest
-    
+    outputs:
+      artifact-name: arquivos-extraidos
     steps:
-    - name: Checkout do repositório
-      uses: actions/checkout@v3
-    
-    - name: Criar diretório para extração
-      run: mkdir -p extracted-files
-    
-    - name: Extrair arquivo ZIP
-      run: |
-        unzip nevermiss-2-em-1.zip -d extracted-files/
-        echo "Arquivo extraído com sucesso!"
-    
-    - name: Listar arquivos extraídos
-      run: |
-        echo "Conteúdo extraído:"
-        ls -la extracted-files/
-    
-    - name: Upload dos arquivos extraídos como artefato
-      uses: actions/upload-artifact@v4
-      with:
-        name: arquivos-extraidos
-        path: extracted-files/
-        retention-days: 7
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Criar diretório para extração
+        run: mkdir -p extracted-files
+
+      - name: Extrair arquivo ZIP
+        run: |
+          unzip nevermiss-2-em-1.zip -d extracted-files/
+          echo "Arquivo extraído com sucesso!"
+
+      - name: Listar arquivos extraídos
+        run: |
+          echo "Conteúdo extraído:"
+          ls -la extracted-files/
+
+      - name: Upload dos arquivos extraídos como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.extract-files.outputs.artifact-name }}
+          path: extracted-files/
+          retention-days: 7
+
+  commit-extracted:
+    runs-on: ubuntu-latest
+    needs: extract-zip
+    steps:
+      - name: Checkout para commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true    # mantém o GITHUB_TOKEN para push
+          fetch-depth: 0               # histórico completo, evita problemas de push
+
+      - name: Baixar artefato de extração
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.extract-zip.outputs.artifact-name }}
+          path: extracted-files
+
+      - name: Copiar arquivos para o repositório
+        run: |
+          cp -R extracted-files/* .    # ajusta o destino conforme sua estrutura
+
+      - name: Configurar Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Comitar e dar push
+        run: |
+          git add .
+          git diff --cached --quiet || \
+            (git commit -m "Adiciona arquivos extraídos do ZIP [skip ci]" && git push)
